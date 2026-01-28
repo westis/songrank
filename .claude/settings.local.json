@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s \"c:\\\\Users\\\\westi\\\\Documents\\\\server\\\\songrating\")",
+      "Bash(dir:*)",
+      "WebFetch(domain:supabase.com)",
+      "Bash(npx create-next-app@latest . --yes)",
+      "Bash(git init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx next build)",
+      "Bash(git add:*)"
+    ]
+  }
+}

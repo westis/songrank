@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------
+   SongRank Design System
+   Dark theme with warm amber/gold accents on deep charcoal.
+   Distinctive, atmospheric -- avoids the "AI slop" aesthetic.
+   ---------------------------------------------------------------- */
+
+:root {
+  /* Surface tones (dark base) */
+  --background: #0f1114;
+  --surface: #181b20;
+  --surface-raised: #1f2329;
+  --surface-overlay: #272c34;
+
+  /* Text */
+  --foreground: #e8e4df;
+  --foreground-muted: #9a958e;
+  --foreground-subtle: #6b6560;
+
+  /* Accent -- warm amber/gold */
+  --accent: #e2a84b;
+  --accent-hover: #eab95f;
+  --accent-muted: #c08a30;
+  --accent-subtle: rgba(226, 168, 75, 0.12);
+
+  /* Status */
+  --success: #5cb87a;
+  --warning: #e2a84b;
+  --error: #d45656;
+
+  /* Borders */
+  --border: #2a2e35;
+  --border-muted: #1f2329;
+
+  /* Misc */
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-border: var(--border);
+  --color-border-muted: var(--border-muted);
+  --font-sans: var(--font-outfit);
+  --font-mono: var(--font-jet);
+}
+
+/* ---- Base ---- */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Layered gradient background for main surfaces */
+.bg-page {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(226, 168, 75, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(226, 168, 75, 0.03) 0%, transparent 50%),
+    var(--background);
+}
+
+/* ---- Animations ---- */
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 168, 75, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(226, 168, 75, 0.15); }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fade-slide-up 0.5s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out both;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Staggered delays for list items */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+
+/* ---- Scrollbar ---- */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-subtle);
+}
