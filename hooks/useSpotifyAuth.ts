@@ -32,6 +32,7 @@ export function useSpotifyAuth() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      console.log("useSpotifyAuth: user =", user?.id);
       if (!user) return null;
 
       const { data, error } = await supabase
@@ -39,6 +40,8 @@ export function useSpotifyAuth() {
         .select("*")
         .eq("user_id", user.id)
         .single<SpotifyTokenRecord>();
+
+      console.log("useSpotifyAuth: token query result =", { data: data ? "found" : null, error: error?.code });
 
       if (error) {
         // No token found is not an error state

@@ -68,6 +68,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
   // Load Spotify SDK script
   useEffect(() => {
+    console.log("SpotifyPlayerContext: isConnected =", isConnected);
     if (!isConnected) return;
 
     // Check if script already loaded
