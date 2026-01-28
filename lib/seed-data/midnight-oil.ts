@@ -18,9 +18,6 @@ export const MIDNIGHT_OIL_ALBUMS: SeedAlbum[] = [
       "Nothing Lost...Nothing Gained",
       "Knife's Edge",
       "Used and Abused",
-      "Buy Me a Bridge",
-      "Graveyard Train",
-      "Lucky Country",
     ],
   },
   {
@@ -224,12 +221,7 @@ export const MIDNIGHT_OIL_ALBUMS: SeedAlbum[] = [
   {
     album: "Species Deceases (EP)",
     year: 1985,
-    tracks: [
-      "Species Deceases",
-      "Hercules",
-      "Progress",
-      "Blossom and Blood",
-    ],
+    tracks: ["Species Deceases", "Hercules", "Progress", "Blossom and Blood"],
   },
   {
     album: "The Makarrata Project",

@@ -9,7 +9,12 @@
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
       "Bash(npx next build)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(wc:*)",
+      "Bash(git push)",
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
