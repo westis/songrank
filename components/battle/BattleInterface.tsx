@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { useBattle } from "@/hooks/useBattle";
 import { useProject } from "@/hooks/useProjects";
+import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
+import { useSpotifyAuth } from "@/hooks/useSpotifyAuth";
 import SongCard from "./SongCard";
 import ScopeSelector from "./ScopeSelector";
-import type { BattleScope, Confidence } from "@/lib/types";
+import PlaybackControls from "./PlaybackControls";
+import type { BattleScope, Confidence, Song } from "@/lib/types";
 
 interface BattleInterfaceProps {
   projectId: string;
@@ -57,6 +60,10 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
   const { data: project } = useProject(projectId);
   const confidenceLevels = project?.confidence_levels ?? 1;
   const confidenceOptions = getConfidenceOptions(confidenceLevels);
+
+  // Spotify playback
+  const { isConnected: spotifyConnected } = useSpotifyAuth();
+  const { play, pause, isPlaying, currentTrack, isReady: playerReady } = useSpotifyPlayer();
 
   const {
     songA,
@@ -122,6 +129,24 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
     undoLastBattle.mutate();
   };
 
+  // Handle song playback
+  const handlePlay = (song: Song) => {
+    if (!song.spotify_uri || song.spotify_uri.startsWith("manual:")) return;
+
+    // If this song is already playing, pause it
+    if (currentTrack?.uri === song.spotify_uri && isPlaying) {
+      pause();
+    } else {
+      // Play the song
+      play(song.spotify_uri);
+    }
+  };
+
+  // Check if a specific song is currently playing
+  const isSongPlaying = (song: Song) => {
+    return currentTrack?.uri === song.spotify_uri && isPlaying;
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -151,6 +176,28 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
             handleUndo();
           }
           break;
+        // Playback shortcuts
+        case "q":
+        case "Q":
+          if (songA && spotifyConnected && playerReady) {
+            e.preventDefault();
+            handlePlay(songA);
+          }
+          break;
+        case "e":
+        case "E":
+          if (songB && spotifyConnected && playerReady) {
+            e.preventDefault();
+            handlePlay(songB);
+          }
+          break;
+        case " ":
+          if (spotifyConnected && playerReady && currentTrack) {
+            e.preventDefault();
+            if (isPlaying) pause();
+            else play(currentTrack.uri);
+          }
+          break;
         default:
           // Number keys for confidence selection
           if (pick !== null && confidenceOptions.length > 0) {
@@ -164,7 +211,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songA, songB, isPending, lastBattleId, pick, confidenceOptions.length]);
+  }, [songA, songB, isPending, lastBattleId, pick, confidenceOptions.length, spotifyConnected, playerReady, currentTrack, isPlaying]);
 
   if (loading && !songA) {
     return (
@@ -324,14 +371,21 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           onSelect={() => handleCardClick(songA.id)}
           disabled={isPending}
           selected={pick === songA.id}
+          onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
+          isPlaying={isSongPlaying(songA)}
         />
         <SongCard
           song={songB}
           onSelect={() => handleCardClick(songB.id)}
           disabled={isPending}
           selected={pick === songB.id}
+          onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
+          isPlaying={isSongPlaying(songB)}
         />
       </div>
+
+      {/* Playback controls */}
+      {spotifyConnected && <PlaybackControls />}
 
       {/* Draw option */}
       <button
@@ -354,6 +408,12 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
             {" "}
             &bull; 1&#8209;{confidenceLevels}&nbsp;certainty &bull;
             Esc&nbsp;cancel
+          </>
+        )}
+        {spotifyConnected && playerReady && (
+          <>
+            {" "}
+            &bull; Q/E&nbsp;play &bull; Space&nbsp;pause
           </>
         )}
       </p>
