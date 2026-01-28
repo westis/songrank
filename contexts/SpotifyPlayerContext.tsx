@@ -90,38 +90,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected]);
 
-  // Load Spotify SDK script and initialize player
-  useEffect(() => {
-    if (!isConnected) return;
-
-    // Small delay to ensure clean state after reconnection
-    const initTimeout = setTimeout(() => {
-      // Check if script already loaded
-      if (window.Spotify) {
-        initializePlayer();
-        return;
-      }
-
-      // Define callback before loading script
-      window.onSpotifyWebPlaybackSDKReady = () => {
-        initializePlayer();
-      };
-
-      // Check if script element already exists
-      if (!document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
-        // Load SDK script
-        const script = document.createElement("script");
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.async = true;
-        document.body.appendChild(script);
-      }
-    }, 100);
-
-    return () => {
-      clearTimeout(initTimeout);
-    };
-  }, [isConnected, initializePlayer]);
-
+  // Define initializePlayer BEFORE the useEffect that uses it
   const initializePlayer = useCallback(async () => {
     if (playerRef.current) return;
 
@@ -265,6 +234,38 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
       }
     }, 10000);
   }, [getValidToken]);
+
+  // Load Spotify SDK script and initialize player
+  useEffect(() => {
+    if (!isConnected) return;
+
+    // Small delay to ensure clean state after reconnection
+    const initTimeout = setTimeout(() => {
+      // Check if script already loaded
+      if (window.Spotify) {
+        initializePlayer();
+        return;
+      }
+
+      // Define callback before loading script
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        initializePlayer();
+      };
+
+      // Check if script element already exists
+      if (!document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
+        // Load SDK script
+        const script = document.createElement("script");
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(initTimeout);
+    };
+  }, [isConnected, initializePlayer]);
 
   // Position tracking interval
   useEffect(() => {
