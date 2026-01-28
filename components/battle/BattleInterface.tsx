@@ -7,7 +7,6 @@ import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
 import { useSpotifyAuth } from "@/hooks/useSpotifyAuth";
 import SongCard from "./SongCard";
 import ScopeSelector from "./ScopeSelector";
-import PlaybackControls from "./PlaybackControls";
 import type { BattleScope, Confidence, Song } from "@/lib/types";
 
 interface BattleInterfaceProps {
@@ -63,7 +62,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
 
   // Spotify playback
   const { isConnected: spotifyConnected } = useSpotifyAuth();
-  const { play, pause, isPlaying, currentTrack, isReady: playerReady } = useSpotifyPlayer();
+  const { play, pause, isPlaying, currentTrack, isReady: playerReady, position, duration } = useSpotifyPlayer();
 
   const {
     songA,
@@ -211,7 +210,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songA, songB, isPending, lastBattleId, pick, confidenceOptions.length, spotifyConnected, playerReady, currentTrack, isPlaying]);
+  }, [songA, songB, isPending, lastBattleId, pick, confidenceOptions.length, spotifyConnected, playerReady, currentTrack, isPlaying, position, duration]);
 
   if (loading && !songA) {
     return (
@@ -373,6 +372,8 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           selected={pick === songA.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songA)}
+          playbackPosition={isSongPlaying(songA) ? position : 0}
+          playbackDuration={isSongPlaying(songA) ? duration : 0}
         />
         <SongCard
           song={songB}
@@ -381,11 +382,10 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           selected={pick === songB.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songB)}
+          playbackPosition={isSongPlaying(songB) ? position : 0}
+          playbackDuration={isSongPlaying(songB) ? duration : 0}
         />
       </div>
-
-      {/* Playback controls */}
-      {spotifyConnected && <PlaybackControls />}
 
       {/* Draw option */}
       <button

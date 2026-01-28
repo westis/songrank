@@ -10,6 +10,8 @@ interface SongCardProps {
   selected?: boolean;
   onPlay?: (song: Song) => void;
   isPlaying?: boolean;
+  playbackPosition?: number;
+  playbackDuration?: number;
 }
 
 function getSpotifySearchUrl(song: Song): string {
@@ -25,15 +27,28 @@ export default function SongCard({
   selected,
   onPlay,
   isPlaying,
+  playbackPosition = 0,
+  playbackDuration = 0,
 }: SongCardProps) {
+  const progress = playbackDuration > 0 ? (playbackPosition / playbackDuration) * 100 : 0;
+
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   return (
     <button
       onClick={onSelect}
       disabled={disabled}
-      className={`group w-full rounded-xl border px-4 py-3 text-left transition-all sm:px-5 sm:py-4 ${
+      className={`group relative w-full overflow-hidden rounded-xl border px-4 py-3 text-left transition-all sm:px-5 sm:py-4 ${
         selected
           ? "border-accent bg-accent-subtle ring-2 ring-accent/30"
-          : "border-border bg-surface hover:border-accent/40 hover:bg-surface-raised"
+          : isPlaying
+            ? "border-[#1DB954]/50 bg-surface"
+            : "border-border bg-surface hover:border-accent/40 hover:bg-surface-raised"
       } ${disabled ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
     >
       <div className="flex items-center gap-4">
@@ -107,6 +122,24 @@ export default function SongCard({
           </a>
         )}
       </div>
+
+      {/* Progress bar when playing */}
+      {isPlaying && playbackDuration > 0 && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] tabular-nums text-foreground-muted">
+            {formatTime(playbackPosition)}
+          </span>
+          <div className="h-1 flex-1 rounded-full bg-surface-raised">
+            <div
+              className="h-1 rounded-full bg-[#1DB954] transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-[10px] tabular-nums text-foreground-muted">
+            {formatTime(playbackDuration)}
+          </span>
+        </div>
+      )}
     </button>
   );
 }
