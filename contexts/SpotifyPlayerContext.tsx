@@ -92,15 +92,22 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
   // Define initializePlayer BEFORE the useEffect that uses it
   const initializePlayer = useCallback(async () => {
-    if (playerRef.current) return;
-
-    const token = await getValidToken();
-    if (!token) {
-      setState((prev) => ({ ...prev, error: "No access token available" }));
+    if (playerRef.current) {
+      console.log("Player already exists, skipping init");
       return;
     }
 
-    console.log("Initializing Spotify player...");
+    console.log("Getting token...");
+    const token = await getValidToken();
+    if (!token) {
+      console.error("No token available");
+      setState((prev) => ({ ...prev, error: "No access token available" }));
+      return;
+    }
+    console.log("Got token:", token.substring(0, 20) + "...");
+
+    console.log("Creating Spotify player...");
+    console.log("Spotify SDK loaded:", !!window.Spotify);
 
     const player = new window.Spotify.Player({
       name: "SongRank Player",
