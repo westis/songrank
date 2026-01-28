@@ -7,6 +7,7 @@ import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
 import { useSpotifyAuth } from "@/hooks/useSpotifyAuth";
 import SongCard from "./SongCard";
 import ScopeSelector from "./ScopeSelector";
+import DecisionBar from "./DecisionBar";
 import type { BattleScope, Confidence, Song } from "@/lib/types";
 
 interface BattleInterfaceProps {
@@ -58,6 +59,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
 
   const { data: project } = useProject(projectId);
   const confidenceLevels = project?.confidence_levels ?? 1;
+  const allowDraws = project?.allow_draws ?? true;
   const confidenceOptions = getConfidenceOptions(confidenceLevels);
 
   // Spotify playback
@@ -121,6 +123,13 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
     submitBattle(winnerId, confidence);
   };
 
+  // Handler for DecisionBar (one-click battle submission)
+  const handleDecision = (winner: "a" | "b" | null, confidence: Confidence) => {
+    if (isPending || !songA || !songB) return;
+    const winnerId = winner === "a" ? songA.id : winner === "b" ? songB.id : null;
+    submitBattle(winnerId, confidence);
+  };
+
   const handleUndo = () => {
     if (!lastBattleId || undoLastBattle.isPending) return;
     setLastResult(null);
@@ -156,17 +165,55 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
       )
         return;
 
+      // For level 1: arrow keys select winner
+      if (confidenceLevels === 1) {
+        switch (e.key) {
+          case "ArrowLeft":
+            if (songA && !isPending) handleCardClick(songA.id);
+            return;
+          case "ArrowRight":
+            if (songB && !isPending) handleCardClick(songB.id);
+            return;
+          case "d":
+          case "D":
+            if (!isPending && allowDraws) handleDrawClick();
+            return;
+        }
+      }
+
+      // For level 2+: number keys for decision bar
+      if (confidenceLevels >= 2 && songA && songB && !isPending) {
+        const keyNum = parseInt(e.key);
+        if (!isNaN(keyNum) && keyNum >= 1) {
+          const totalSegments = confidenceLevels * 2 + (allowDraws ? 1 : 0);
+          if (keyNum <= totalSegments) {
+            e.preventDefault();
+            // Map key to decision
+            // Keys 1-N are Song A (strongest to weakest)
+            // Middle key is Draw (if allowed)
+            // Keys N+1 to end are Song B (weakest to strongest)
+            const confidenceValues: Confidence[] =
+              confidenceLevels === 2 ? ["obvious", "slight"] :
+              confidenceLevels === 3 ? ["obvious", "clear", "slight"] :
+              ["obvious", "clear", "slight", "coin_flip"];
+
+            if (keyNum <= confidenceLevels) {
+              // Song A wins
+              handleDecision("a", confidenceValues[keyNum - 1]);
+            } else if (allowDraws && keyNum === confidenceLevels + 1) {
+              // Draw
+              handleDecision(null, "slight");
+            } else {
+              // Song B wins
+              const bIndex = keyNum - confidenceLevels - (allowDraws ? 2 : 1);
+              handleDecision("b", confidenceValues[confidenceLevels - 1 - bIndex]);
+            }
+            return;
+          }
+        }
+      }
+
       switch (e.key) {
-        case "ArrowLeft":
-          if (songA && !isPending) handleCardClick(songA.id);
-          break;
-        case "ArrowRight":
-          if (songB && !isPending) handleCardClick(songB.id);
-          break;
-        case "d":
-        case "D":
-          if (!isPending) handleDrawClick();
-          break;
         case "Escape":
           setPick(null);
           break;
@@ -197,20 +244,13 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
             else play(currentTrack.uri);
           }
           break;
-        default:
-          // Number keys for confidence selection
-          if (pick !== null && confidenceOptions.length > 0) {
-            const opt = confidenceOptions.find((o) => o.key === e.key);
-            if (opt) handleConfidenceSelect(opt.value);
-          }
-          break;
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songA, songB, isPending, lastBattleId, pick, confidenceOptions.length, spotifyConnected, playerReady, currentTrack, isPlaying, position, duration]);
+  }, [songA, songB, isPending, lastBattleId, pick, confidenceLevels, allowDraws, spotifyConnected, playerReady, currentTrack, isPlaying]);
 
   if (loading && !songA) {
     return (
@@ -327,39 +367,10 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         </div>
       )}
 
-      {/* Confidence selector — shows when a pick is made and levels > 1 */}
-      {pick !== null && confidenceLevels >= 2 && (
-        <div className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent-subtle px-3 py-2.5">
-          <span className="text-sm text-foreground-muted">
-            {pickLabel}:
-          </span>
-          <span className="text-xs text-foreground-subtle">How clear?</span>
-          <div className="flex gap-1.5">
-            {confidenceOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => handleConfidenceSelect(opt.value)}
-                disabled={isPending}
-                className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1" />
-          <button
-            onClick={() => setPick(null)}
-            className="text-xs text-foreground-subtle hover:text-foreground"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
       {/* Which do you prefer? */}
       <p className="text-sm text-foreground-muted">
         {confidenceLevels >= 2
-          ? "Tap the song you prefer, then select how clear:"
+          ? "Which is better? Use the decision bar below:"
           : "Tap the song you prefer:"}
       </p>
 
@@ -367,8 +378,8 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
       <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
         <SongCard
           song={songA}
-          onSelect={() => handleCardClick(songA.id)}
-          disabled={isPending}
+          onSelect={() => confidenceLevels === 1 && handleCardClick(songA.id)}
+          disabled={isPending || confidenceLevels >= 2}
           selected={pick === songA.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songA)}
@@ -377,8 +388,8 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         />
         <SongCard
           song={songB}
-          onSelect={() => handleCardClick(songB.id)}
-          disabled={isPending}
+          onSelect={() => confidenceLevels === 1 && handleCardClick(songB.id)}
+          disabled={isPending || confidenceLevels >= 2}
           selected={pick === songB.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songB)}
@@ -387,29 +398,44 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         />
       </div>
 
-      {/* Draw option */}
-      <button
-        onClick={handleDrawClick}
-        disabled={isPending}
-        className={`w-full rounded-lg border py-2 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 ${
-          pick === "draw"
-            ? "border-accent bg-accent-subtle text-accent"
-            : "border-border text-foreground-subtle hover:border-foreground-subtle hover:text-foreground-muted"
-        }`}
-      >
-        Can&apos;t decide &mdash; Draw
-      </button>
+      {/* Decision bar — for confidence levels 2+ */}
+      {confidenceLevels >= 2 && (
+        <DecisionBar
+          songATitle={songA.title}
+          songBTitle={songB.title}
+          confidenceLevels={confidenceLevels}
+          allowDraws={allowDraws}
+          onDecision={handleDecision}
+          disabled={isPending}
+        />
+      )}
+
+      {/* Simple draw option — only for level 1 and if draws allowed */}
+      {confidenceLevels === 1 && allowDraws && (
+        <button
+          onClick={handleDrawClick}
+          disabled={isPending}
+          className={`w-full rounded-lg border py-2 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 ${
+            pick === "draw"
+              ? "border-accent bg-accent-subtle text-accent"
+              : "border-border text-foreground-subtle hover:border-foreground-subtle hover:text-foreground-muted"
+          }`}
+        >
+          Can&apos;t decide &mdash; Draw
+        </button>
+      )}
 
       {/* Keyboard hint */}
       <p className="text-center text-[11px] text-foreground-subtle">
-        &larr;/&rarr; pick winner &bull; D&nbsp;draw &bull; Ctrl+Z undo
-        {confidenceLevels >= 2 && (
+        {confidenceLevels === 1 ? (
           <>
-            {" "}
-            &bull; 1&#8209;{confidenceLevels}&nbsp;certainty &bull;
-            Esc&nbsp;cancel
+            &larr;/&rarr; pick winner
+            {allowDraws && " \u2022 D\u00a0draw"}
           </>
+        ) : (
+          <>1&#8209;{confidenceLevels * 2 + (allowDraws ? 1 : 0)} decision bar</>
         )}
+        {" "}&bull; Ctrl+Z undo
         {spotifyConnected && playerReady && (
           <>
             {" "}

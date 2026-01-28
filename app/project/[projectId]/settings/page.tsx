@@ -47,6 +47,7 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false);
 
   const currentLevel = project?.confidence_levels ?? 1;
+  const allowDraws = project?.allow_draws ?? true;
 
   const inviteUrl =
     typeof window !== "undefined" && inviteCode
@@ -186,6 +187,49 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Allow Draws */}
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold">Allow Draws</h3>
+              <p className="mt-0.5 text-xs text-foreground-muted">
+                Enable the &quot;Can&apos;t decide&quot; option when two songs are too close to call.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                updateProject.mutate({
+                  projectId,
+                  updates: { allow_draws: !allowDraws },
+                });
+              }}
+              disabled={updateProject.isPending}
+              className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 transition-all hover:border-accent/40 disabled:opacity-50"
+            >
+              <div>
+                <p className="text-sm font-medium">
+                  {allowDraws ? "Draws enabled" : "Draws disabled"}
+                </p>
+                <p className="text-xs text-foreground-muted">
+                  {allowDraws
+                    ? "Users can mark battles as a draw"
+                    : "Users must pick a winner for every battle"}
+                </p>
+              </div>
+              <div
+                className={`relative h-6 w-11 rounded-full transition-colors ${
+                  allowDraws ? "bg-accent" : "bg-surface-raised"
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    allowDraws ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </div>
+            </button>
           </div>
         </div>
       )}

@@ -83,6 +83,7 @@ export function useUpdateProject() {
         name?: string;
         description?: string | null;
         confidence_levels?: number;
+        allow_draws?: boolean;
       };
     }) => {
       const { data, error } = await supabase

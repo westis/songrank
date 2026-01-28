@@ -23,6 +23,7 @@ export interface Project {
   name: string;
   description: string | null;
   confidence_levels: number; // 1-4, default 1
+  allow_draws: boolean; // default true
   created_at: string;
   updated_at: string;
 }
