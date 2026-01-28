@@ -11,13 +11,7 @@ import {
 } from "react";
 import { useSpotifyAuth } from "@/hooks/useSpotifyAuth";
 
-// Spotify Web Playback SDK types
-declare global {
-  interface Window {
-    Spotify: typeof Spotify;
-    onSpotifyWebPlaybackSDKReady: () => void;
-  }
-}
+// Spotify SDK types are defined in types/spotify-sdk.d.ts
 
 interface SpotifyPlayerState {
   isReady: boolean;
