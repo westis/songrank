@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { retrieveCodeVerifier, getReturnPath } from "@/lib/spotify/auth";
 import Loading from "@/components/shared/Loading";
 
 function CallbackContent() {
@@ -59,13 +60,49 @@ function CallbackContent() {
         return;
       }
 
-      // Spotify OAuth callback (for later)
+      // Spotify OAuth callback
       const code = searchParams.get("code");
       if (code && !provider) {
-        // Spotify token exchange -- to be implemented when Spotify is available
-        setStatus("success");
-        setMessage("Spotify connected successfully.");
-        return;
+        const codeVerifier = retrieveCodeVerifier();
+        if (!codeVerifier) {
+          setStatus("error");
+          setError(
+            "Missing code verifier. Please try connecting Spotify again."
+          );
+          return;
+        }
+
+        // Exchange code for tokens
+        try {
+          const response = await fetch("/api/auth/spotify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, codeVerifier }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            setStatus("error");
+            setError(result.error || "Failed to connect Spotify");
+            return;
+          }
+
+          setStatus("success");
+          setMessage("Spotify connected successfully!");
+
+          // Redirect to return path after brief delay
+          const returnPath = getReturnPath();
+          setTimeout(() => {
+            router.push(returnPath);
+            router.refresh();
+          }, 1500);
+          return;
+        } catch {
+          setStatus("error");
+          setError("Failed to connect Spotify. Please try again.");
+          return;
+        }
       }
 
       // Default: check if we have a valid session (e.g. email confirmation link)

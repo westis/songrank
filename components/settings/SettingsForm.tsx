@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
+import SpotifyConnect from "@/components/auth/SpotifyConnect";
 
 interface SettingsFormProps {
   userEmail: string;
@@ -85,11 +86,11 @@ export default function SettingsForm({ userEmail }: SettingsFormProps) {
       <div className="animate-fade-slide-up stagger-3 mt-4 rounded-xl border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold">Spotify Connection</h2>
         <p className="mt-2 text-sm text-foreground-muted">
-          Connect your Spotify account to enable playback during battles.
+          Connect your Spotify account to enable playback during battles and import songs directly from Spotify.
         </p>
-        <button className="mt-4 rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90">
-          Connect Spotify
-        </button>
+        <div className="mt-4">
+          <SpotifyConnect returnPath="/settings" />
+        </div>
       </div>
     </>
   );

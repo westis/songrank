@@ -257,3 +257,69 @@ export function useDeleteAlbumSongs() {
     },
   });
 }
+
+/**
+ * Import songs from Spotify with full metadata
+ */
+export function useImportSpotifySongs() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      songs,
+    }: {
+      projectId: string;
+      songs: Array<Omit<Song, "id" | "created_at">>;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Insert songs in batches of 100 to avoid request size limits
+      const batchSize = 100;
+      const allInserted: Song[] = [];
+
+      for (let i = 0; i < songs.length; i += batchSize) {
+        const batch = songs.slice(i, i + batchSize);
+
+        const { data, error } = await supabase
+          .from("songs")
+          .insert(batch)
+          .select();
+
+        if (error) throw error;
+        if (data) allInserted.push(...(data as Song[]));
+      }
+
+      // Create initial ratings for all inserted songs
+      const ratingRows = allInserted.map((song) => ({
+        project_id: projectId,
+        song_id: song.id,
+        user_id: user.id,
+        rating: 1500,
+        rd: 350,
+        battle_count: 0,
+        algorithm: "whr",
+      }));
+
+      // Insert ratings in batches
+      for (let i = 0; i < ratingRows.length; i += batchSize) {
+        const batch = ratingRows.slice(i, i + batchSize);
+        const { error: ratingsError } = await supabase
+          .from("ratings")
+          .insert(batch);
+
+        if (ratingsError) throw ratingsError;
+      }
+
+      return allInserted;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["songs", variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["rankings"] });
+      queryClient.invalidateQueries({ queryKey: ["albums", variables.projectId] });
+    },
+  });
+}
