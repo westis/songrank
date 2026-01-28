@@ -380,7 +380,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
       {spotifyConnected && !playerReady && !playerError && (
         <div className="flex items-center gap-2 rounded-lg border border-[#1DB954]/30 bg-[#1DB954]/10 px-4 py-2.5 text-sm text-[#1DB954]">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          <span>Initializing Spotify player...</span>
+          <span>Initializing Spotify player (requires Premium)...</span>
         </div>
       )}
 

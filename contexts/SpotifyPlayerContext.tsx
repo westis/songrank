@@ -103,6 +103,8 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    console.log("Initializing Spotify player...");
+
     const player = new window.Spotify.Player({
       name: "SongRank Player",
       getOAuthToken: async (cb) => {
@@ -114,19 +116,25 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
     playerRef.current = player;
 
+    // Track if we've received the ready event
+    let hasReceivedReady = false;
+
     // Error handling
     player.addListener("initialization_error", ({ message }) => {
+      console.error("Spotify initialization error:", message);
       setState((prev) => ({ ...prev, error: `Initialization error: ${message}` }));
     });
 
     player.addListener("authentication_error", ({ message }) => {
+      console.error("Spotify authentication error:", message);
       setState((prev) => ({ ...prev, error: `Authentication error: ${message}` }));
     });
 
     player.addListener("account_error", ({ message }) => {
+      console.error("Spotify account error:", message);
       setState((prev) => ({
         ...prev,
-        error: `Account error: ${message}`,
+        error: `Spotify Premium required for playback`,
         isPremium: false,
       }));
     });
@@ -138,6 +146,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     // Ready
     player.addListener("ready", ({ device_id }) => {
       console.log("Spotify Player ready with device ID:", device_id);
+      hasReceivedReady = true;
       setState((prev) => ({
         ...prev,
         isReady: true,
@@ -186,10 +195,30 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     });
 
     // Connect player
+    console.log("Connecting to Spotify...");
     const connected = await player.connect();
+    console.log("Spotify connect result:", connected);
+
     if (!connected) {
       setState((prev) => ({ ...prev, error: "Failed to connect to Spotify" }));
+      return;
     }
+
+    // Timeout: if we don't get "ready" within 10 seconds, show error
+    setTimeout(() => {
+      if (!hasReceivedReady && playerRef.current === player) {
+        console.error("Spotify player timeout - never received ready event");
+        setState((prev) => {
+          // Only set error if we don't already have one
+          if (prev.error) return prev;
+          return {
+            ...prev,
+            error: "Spotify Premium required for web playback. Use the Spotify link on each song instead.",
+            isPremium: false,
+          };
+        });
+      }
+    }, 10000);
   }, [getValidToken]);
 
   // Position tracking interval
