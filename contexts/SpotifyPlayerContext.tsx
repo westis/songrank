@@ -68,31 +68,22 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
   // Load Spotify SDK script
   useEffect(() => {
-    console.log("SpotifyPlayerContext: isConnected =", isConnected);
     if (!isConnected) return;
-
-    console.log("SpotifyPlayerContext: window.Spotify exists?", !!window.Spotify);
 
     // Check if script already loaded
     if (window.Spotify) {
-      console.log("SpotifyPlayerContext: Calling initializePlayer (SDK already loaded)");
       initializePlayer();
       return;
     }
 
     // Define callback before loading script
-    console.log("SpotifyPlayerContext: Setting up SDK callback and loading script");
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      console.log("SpotifyPlayerContext: SDK ready callback fired!");
-      initializePlayer();
-    };
+    window.onSpotifyWebPlaybackSDKReady = initializePlayer;
 
     // Load SDK script
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     script.async = true;
     document.body.appendChild(script);
-    console.log("SpotifyPlayerContext: Script element added to DOM");
 
     return () => {
       // Cleanup on unmount
@@ -104,18 +95,14 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   }, [isConnected]);
 
   const initializePlayer = useCallback(async () => {
-    console.log("initializePlayer: called, playerRef.current =", !!playerRef.current);
     if (playerRef.current) return;
 
-    console.log("initializePlayer: getting token...");
     const token = await getValidToken();
-    console.log("initializePlayer: token =", token ? "found" : "null");
     if (!token) {
       setState((prev) => ({ ...prev, error: "No access token available" }));
       return;
     }
 
-    console.log("initializePlayer: creating Spotify.Player...");
     const player = new window.Spotify.Player({
       name: "SongRank Player",
       getOAuthToken: async (cb) => {
@@ -199,9 +186,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     });
 
     // Connect player
-    console.log("initializePlayer: calling player.connect()...");
     const connected = await player.connect();
-    console.log("initializePlayer: connect result =", connected);
     if (!connected) {
       setState((prev) => ({ ...prev, error: "Failed to connect to Spotify" }));
     }
