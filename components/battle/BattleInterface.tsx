@@ -379,7 +379,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         <SongCard
           song={songA}
           onSelect={() => confidenceLevels === 1 && handleCardClick(songA.id)}
-          disabled={isPending || confidenceLevels >= 2}
+          disabled={isPending}
           selected={pick === songA.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songA)}
@@ -389,7 +389,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         <SongCard
           song={songB}
           onSelect={() => confidenceLevels === 1 && handleCardClick(songB.id)}
-          disabled={isPending || confidenceLevels >= 2}
+          disabled={isPending}
           selected={pick === songB.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
           isPlaying={isSongPlaying(songB)}
@@ -427,15 +427,14 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
 
       {/* Keyboard hint */}
       <p className="text-center text-[11px] text-foreground-subtle">
-        {confidenceLevels === 1 ? (
+        {confidenceLevels === 1 && (
           <>
             &larr;/&rarr; pick winner
             {allowDraws && " \u2022 D\u00a0draw"}
+            {" "}&bull;{" "}
           </>
-        ) : (
-          <>1&#8209;{confidenceLevels * 2 + (allowDraws ? 1 : 0)} decision bar</>
         )}
-        {" "}&bull; Ctrl+Z undo
+        Ctrl+Z undo
         {spotifyConnected && playerReady && (
           <>
             {" "}
