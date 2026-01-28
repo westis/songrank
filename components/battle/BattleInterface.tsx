@@ -165,24 +165,32 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
       )
         return;
 
-      // For level 1: arrow keys select winner
-      if (confidenceLevels === 1) {
-        switch (e.key) {
-          case "ArrowLeft":
-            if (songA && !isPending) handleCardClick(songA.id);
-            return;
-          case "ArrowRight":
-            if (songB && !isPending) handleCardClick(songB.id);
-            return;
-          case "d":
-          case "D":
-            if (!isPending && allowDraws) handleDrawClick();
-            return;
+      // Arrow keys select winner (all levels)
+      switch (e.key) {
+        case "ArrowLeft":
+          if (songA && !isPending) handleCardClick(songA.id);
+          return;
+        case "ArrowRight":
+          if (songB && !isPending) handleCardClick(songB.id);
+          return;
+        case "d":
+        case "D":
+          if (!isPending && allowDraws) handleDrawClick();
+          return;
+      }
+
+      // For level 2+: if a pick is made, number keys select confidence
+      if (confidenceLevels >= 2 && pick !== null && pick !== "draw") {
+        const keyNum = parseInt(e.key);
+        if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= confidenceOptions.length) {
+          e.preventDefault();
+          handleConfidenceSelect(confidenceOptions[keyNum - 1].value);
+          return;
         }
       }
 
-      // For level 2+: number keys for decision bar
-      if (confidenceLevels >= 2 && songA && songB && !isPending) {
+      // For level 2+: number keys for decision bar (only when no pick is selected)
+      if (confidenceLevels >= 2 && pick === null && songA && songB && !isPending) {
         const keyNum = parseInt(e.key);
         if (!isNaN(keyNum) && keyNum >= 1) {
           const totalSegments = confidenceLevels * 2 + (allowDraws ? 1 : 0);
@@ -378,7 +386,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
       <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
         <SongCard
           song={songA}
-          onSelect={() => confidenceLevels === 1 && handleCardClick(songA.id)}
+          onSelect={() => handleCardClick(songA.id)}
           disabled={isPending}
           selected={pick === songA.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
@@ -388,7 +396,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
         />
         <SongCard
           song={songB}
-          onSelect={() => confidenceLevels === 1 && handleCardClick(songB.id)}
+          onSelect={() => handleCardClick(songB.id)}
           disabled={isPending}
           selected={pick === songB.id}
           onPlay={spotifyConnected && playerReady ? handlePlay : undefined}
@@ -397,6 +405,34 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           playbackDuration={isSongPlaying(songB) ? duration : 0}
         />
       </div>
+
+      {/* Confidence selector — shows when a pick is made and levels > 1 */}
+      {pick !== null && pick !== "draw" && confidenceLevels >= 2 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/30 bg-accent-subtle px-3 py-2.5">
+          <span className="text-sm font-medium text-accent">
+            {pick === songA.id ? songA.title : songB.title}
+          </span>
+          <span className="text-xs text-foreground-subtle">How confident?</span>
+          <div className="flex flex-wrap gap-1.5">
+            {confidenceOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleConfidenceSelect(opt.value)}
+                disabled={isPending}
+                className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setPick(null)}
+            className="ml-auto text-xs text-foreground-subtle hover:text-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       {/* Decision bar — for confidence levels 2+ */}
       {confidenceLevels >= 2 && (
@@ -427,14 +463,9 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
 
       {/* Keyboard hint */}
       <p className="text-center text-[11px] text-foreground-subtle">
-        {confidenceLevels === 1 && (
-          <>
-            &larr;/&rarr; pick winner
-            {allowDraws && " \u2022 D\u00a0draw"}
-            {" "}&bull;{" "}
-          </>
-        )}
-        Ctrl+Z undo
+        &larr;/&rarr; pick winner
+        {allowDraws && " \u2022 D\u00a0draw"}
+        {" "}&bull; Ctrl+Z undo
         {spotifyConnected && playerReady && (
           <>
             {" "}
