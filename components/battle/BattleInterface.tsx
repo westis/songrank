@@ -64,7 +64,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
 
   // Spotify playback
   const { isConnected: spotifyConnected } = useSpotifyAuth();
-  const { play, pause, isPlaying, currentTrack, isReady: playerReady, position, duration } = useSpotifyPlayer();
+  const { play, pause, seek, isPlaying, currentTrack, isReady: playerReady, position, duration } = useSpotifyPlayer();
 
   const {
     songA,
@@ -393,6 +393,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           isPlaying={isSongPlaying(songA)}
           playbackPosition={isSongPlaying(songA) ? position : 0}
           playbackDuration={isSongPlaying(songA) ? duration : 0}
+          onSeek={isSongPlaying(songA) ? seek : undefined}
         />
         <SongCard
           song={songB}
@@ -403,6 +404,7 @@ export default function BattleInterface({ projectId }: BattleInterfaceProps) {
           isPlaying={isSongPlaying(songB)}
           playbackPosition={isSongPlaying(songB) ? position : 0}
           playbackDuration={isSongPlaying(songB) ? duration : 0}
+          onSeek={isSongPlaying(songB) ? seek : undefined}
         />
       </div>
 

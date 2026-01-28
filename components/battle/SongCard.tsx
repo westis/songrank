@@ -12,6 +12,7 @@ interface SongCardProps {
   isPlaying?: boolean;
   playbackPosition?: number;
   playbackDuration?: number;
+  onSeek?: (positionMs: number) => void;
 }
 
 function getSpotifySearchUrl(song: Song): string {
@@ -29,6 +30,7 @@ export default function SongCard({
   isPlaying,
   playbackPosition = 0,
   playbackDuration = 0,
+  onSeek,
 }: SongCardProps) {
   const progress = playbackDuration > 0 ? (playbackPosition / playbackDuration) * 100 : 0;
 
@@ -129,9 +131,20 @@ export default function SongCard({
           <span className="text-[10px] tabular-nums text-foreground-muted">
             {formatTime(playbackPosition)}
           </span>
-          <div className="h-1 flex-1 rounded-full bg-surface-raised">
+          <div
+            className="h-2 flex-1 cursor-pointer rounded-full bg-surface-raised"
+            onClick={(e) => {
+              if (!onSeek) return;
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              const clickX = e.clientX - rect.left;
+              const percentage = clickX / rect.width;
+              const seekPosition = Math.floor(percentage * playbackDuration);
+              onSeek(seekPosition);
+            }}
+          >
             <div
-              className="h-1 rounded-full bg-[#1DB954] transition-all"
+              className="pointer-events-none h-2 rounded-full bg-[#1DB954] transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
