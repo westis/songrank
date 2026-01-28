@@ -66,33 +66,61 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     error: null,
   });
 
-  // Load Spotify SDK script
+  // Reset state when disconnected
   useEffect(() => {
-    if (!isConnected) return;
-
-    // Check if script already loaded
-    if (window.Spotify) {
-      initializePlayer();
-      return;
-    }
-
-    // Define callback before loading script
-    window.onSpotifyWebPlaybackSDKReady = initializePlayer;
-
-    // Load SDK script
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup on unmount
+    if (!isConnected) {
+      // Clean up existing player
       if (playerRef.current) {
+        console.log("Disconnecting Spotify player...");
         playerRef.current.disconnect();
         playerRef.current = null;
       }
-    };
+      // Reset state
+      setState({
+        isReady: false,
+        isPremium: null,
+        deviceId: null,
+        currentTrack: null,
+        position: 0,
+        duration: 0,
+        isPlaying: false,
+        volume: 0.5,
+        error: null,
+      });
+    }
   }, [isConnected]);
+
+  // Load Spotify SDK script and initialize player
+  useEffect(() => {
+    if (!isConnected) return;
+
+    // Small delay to ensure clean state after reconnection
+    const initTimeout = setTimeout(() => {
+      // Check if script already loaded
+      if (window.Spotify) {
+        initializePlayer();
+        return;
+      }
+
+      // Define callback before loading script
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        initializePlayer();
+      };
+
+      // Check if script element already exists
+      if (!document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
+        // Load SDK script
+        const script = document.createElement("script");
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(initTimeout);
+    };
+  }, [isConnected, initializePlayer]);
 
   const initializePlayer = useCallback(async () => {
     if (playerRef.current) return;
@@ -194,17 +222,34 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
       }));
     });
 
-    // Connect player
+    // Connect player with timeout
     console.log("Connecting to Spotify...");
-    const connected = await player.connect();
-    console.log("Spotify connect result:", connected);
+    try {
+      // Race between connect() and a timeout
+      const connectPromise = player.connect();
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => reject(new Error("Connection timeout")), 15000);
+      });
 
-    if (!connected) {
-      setState((prev) => ({ ...prev, error: "Failed to connect to Spotify" }));
+      const connected = await Promise.race([connectPromise, timeoutPromise]);
+      console.log("Spotify connect result:", connected);
+
+      if (!connected) {
+        setState((prev) => ({ ...prev, error: "Failed to connect to Spotify" }));
+        return;
+      }
+    } catch (connectError) {
+      console.error("Spotify connect error:", connectError);
+      setState((prev) => ({
+        ...prev,
+        error: connectError instanceof Error && connectError.message === "Connection timeout"
+          ? "Spotify connection timed out. Try refreshing the page."
+          : "Failed to connect to Spotify player"
+      }));
       return;
     }
 
-    // Timeout: if we don't get "ready" within 10 seconds, show error
+    // Timeout: if we don't get "ready" within 10 seconds after connect, show error
     setTimeout(() => {
       if (!hasReceivedReady && playerRef.current === player) {
         console.error("Spotify player timeout - never received ready event");
