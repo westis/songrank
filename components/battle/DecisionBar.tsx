@@ -69,7 +69,7 @@ export default function DecisionBar({
       </div>
 
       {/* Decision bar */}
-      <div className="flex h-12 overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="flex h-14 sm:h-16 overflow-hidden rounded-xl border border-border bg-surface">
         {/* Song A wins - left side */}
         {songAOptions.map((opt, i) => {
           const keyNum = i + 1;
@@ -78,14 +78,13 @@ export default function DecisionBar({
               key={`a-${opt.value}`}
               onClick={() => onDecision("a", opt.value)}
               disabled={disabled}
-              className={`flex-1 flex flex-col items-center justify-center border-r border-border text-xs font-medium transition-all hover:bg-accent/20 hover:text-accent disabled:pointer-events-none disabled:opacity-50 ${
+              className={`flex-1 flex flex-col items-center justify-center border-r border-border text-sm font-medium transition-all hover:bg-accent/20 hover:text-accent active:bg-accent/30 disabled:pointer-events-none disabled:opacity-50 ${
                 i === 0 ? "bg-accent/10 text-accent" : "text-foreground-muted"
               }`}
               title={`${songATitle}: ${opt.label} (key ${keyNum})`}
             >
-              <span className="hidden sm:inline">{opt.shortLabel}</span>
-              <span className="sm:hidden">{opt.shortLabel.charAt(0)}</span>
-              <span className="text-[9px] opacity-50">({keyNum})</span>
+              <span>{opt.shortLabel}</span>
+              <span className="text-[10px] opacity-40 hidden sm:inline">({keyNum})</span>
             </button>
           );
         })}
@@ -95,11 +94,11 @@ export default function DecisionBar({
           <button
             onClick={() => onDecision(null, "slight")}
             disabled={disabled}
-            className="flex-1 flex flex-col items-center justify-center border-r border-border bg-surface-raised text-xs font-medium text-foreground-subtle transition-all hover:bg-foreground-subtle/20 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-center border-r border-border bg-surface-raised text-sm font-medium text-foreground-subtle transition-all hover:bg-foreground-subtle/20 hover:text-foreground active:bg-foreground-subtle/30 disabled:pointer-events-none disabled:opacity-50"
             title={`Draw - too close to call (key ${drawKeyNum})`}
           >
             <span>=</span>
-            <span className="text-[9px] opacity-50">({drawKeyNum})</span>
+            <span className="text-[10px] opacity-40 hidden sm:inline">({drawKeyNum})</span>
           </button>
         )}
 
@@ -111,16 +110,15 @@ export default function DecisionBar({
               key={`b-${opt.value}`}
               onClick={() => onDecision("b", opt.value)}
               disabled={disabled}
-              className={`flex-1 flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-accent/20 hover:text-accent disabled:pointer-events-none disabled:opacity-50 ${
+              className={`flex-1 flex flex-col items-center justify-center text-sm font-medium transition-all hover:bg-accent/20 hover:text-accent active:bg-accent/30 disabled:pointer-events-none disabled:opacity-50 ${
                 i === songBOptions.length - 1 ? "border-r-0" : "border-r border-border"
               } ${
                 i === songBOptions.length - 1 ? "bg-accent/10 text-accent" : "text-foreground-muted"
               }`}
               title={`${songBTitle}: ${opt.label} (key ${keyNum})`}
             >
-              <span className="hidden sm:inline">{opt.shortLabel}</span>
-              <span className="sm:hidden">{opt.shortLabel.charAt(0)}</span>
-              <span className="text-[9px] opacity-50">({keyNum})</span>
+              <span>{opt.shortLabel}</span>
+              <span className="text-[10px] opacity-40 hidden sm:inline">({keyNum})</span>
             </button>
           );
         })}
